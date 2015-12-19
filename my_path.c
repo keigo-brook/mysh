@@ -2,17 +2,15 @@
 // Created by KeigoOgawa on 12/15/15.
 //
 
-#include "main.h"
+#include "my_path.h"
 
 int path_num = 0;
-
-
 void init_path() {
     int i, fd;
     ssize_t read_size;
     char tmp[MAX_PATH_LEN];
     for (i = 0; i < MAX_MY_PATH; ++i) {
-        *path[i] = NULL;
+        *path[i] = 0;
     }
 
     fd = open(".path", O_RDONLY);
@@ -65,8 +63,6 @@ Bool get_path(char *command) {
         }
         close(fd);
     }
-
-    printf("mysh: command not found: %s\n", command);
     return false;
 }
 
