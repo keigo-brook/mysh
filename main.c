@@ -2,6 +2,7 @@
 // Created by KeigoOgawa on 12/15/15.
 //
 
+#include <signal.h>
 #include "my_structs.h"
 #include "mysub.h"
 #include "my_path.h"
@@ -91,8 +92,6 @@ void createChild(command *child) {
     }
 }
 
-
-
 int main(void) {
     int pid, status;
     command *list, *head = malloc(sizeof(command));
@@ -100,6 +99,12 @@ int main(void) {
     int saved_fd[0];
     stdfd[0] = dup(0);
     stdfd[1] = dup(1);
+    // 親プロセスではCtrl+cを無視する
+    struct sigaction act;
+    act.sa_handler = SIG_IGN;
+    act.sa_flags = 0;
+    sigemptyset (&act.sa_mask);
+    sigaction (SIGINT, &act, NULL);
 
     while (true) {
         list = head;
@@ -121,6 +126,9 @@ int main(void) {
             perror("fork()");
             return 1;
         } else if (pid == 0) {
+            // 子プロセスではSIG_INTをデフォルトの動作にする
+            act.sa_handler = SIG_DFL;
+            sigaction (SIGINT, &act, NULL);
             if (list->next == NULL) {
                 // 複数の命令がパイプされていない場合
                 changeRedirection(list, saved_fd);
