@@ -5,6 +5,9 @@
 #include "my_path.h"
 
 int path_num = 0;
+
+
+// グローバル変数pathに.pathに書いてあるパスを保存する
 void init_path() {
     int i, fd;
     ssize_t read_size;
@@ -17,15 +20,12 @@ void init_path() {
     if (fd < 0) {
         // TODO .path open error
     }
-    //    printf("%d\n", fd);
-
 
     // TODO when length > MAX_PATH_LEN, while loop
     read_size = read(fd, tmp, MAX_PATH_LEN);
     if (read_size < 0) {
         // TODO .path read error
     }
-    //    printf("%d\n", read_size);
 
     close(fd);
 
@@ -36,7 +36,7 @@ void init_path() {
             // path一つ分が終わり
             path[path_num][pi] ='/';
             path[path_num][pi + 1] = '\0';
-            printf("input path %s\n", path[path_num]);
+//            printf("input path %s\n", path[path_num]);
             path_num++;
             pi = 0;
             // TODO pnum > MAX_PNUM
@@ -49,16 +49,18 @@ void init_path() {
 }
 
 
-Bool get_path(char *command) {
+// グローバル変数pathに順番にnameをくっつけて、その名前のファイルが存在するか確かめる
+// 存在した場合、nameを上書きしてtrueを返す
+Bool get_path(char *name) {
     int i, fd;
     char tmp[256];
 
     for (i = 0; i < path_num; ++i) {
-        sprintf(tmp, "%s%s", path[i], command);
+        sprintf(tmp, "%s%s", path[i], name);
         fd = open(tmp, O_RDONLY);
         if (fd > 0) {
             close(fd);
-            strcpy(command, tmp);
+            strcpy(name, tmp);
             return true;
         }
         close(fd);

@@ -22,6 +22,7 @@ typedef struct Command {
     char name[10];
     char* args[10];
     struct Command *next;
+    char filename[2][10];
 } command;
 
 #endif //MYSH_MY_STRUCTS_H

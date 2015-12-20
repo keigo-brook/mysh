@@ -25,29 +25,35 @@ Bool isReservedName(char *name) {
 }
 
 void getCmd(command *cmd, char *tmp, int slen) {
-    int arg_count = 0;
+    int arg_count = 0, fd[2];
+
+    // 命令1 引数1 引数2 ... の形になっているので、空白で分割する
     char *tmp1 = strtok(tmp, " ");
     if (tmp1 == NULL) {
         strcpy(cmd->name, "\0");
     } else {
         strcpy(cmd->name, tmp1);
+        // 命令の名前をパスから検索して、見つかった場合引数も保存していく
         if (get_path(cmd->name)) {
-            tmp1 = strtok(NULL, " ");
-            cmd->args[arg_count] = malloc(sizeof(char)*10);
+            // 引数の一つ目にはコマンド名を入れる
+            cmd->args[0] = malloc(sizeof(char)*10);
             strcpy(cmd->args[0], cmd->name);
             arg_count++;
+
+            tmp1 = strtok(NULL, " ");
             while (tmp1 != NULL) {
                 if(strlen(tmp1) < slen){
-                    cmd->args[arg_count] = malloc(sizeof(char)*10);
-                    strcpy(cmd->args[arg_count], tmp1);
-                    arg_count++;
+                    if (strcmp(tmp1, ">") == 0) {
+                        strcpy(cmd->filename[1], strtok(NULL, " "));
+                    } else if (strcmp(tmp1, "<") == 0) {
+                        strcpy(cmd->filename[0], strtok(NULL, " "));
+                    } else {
+                        cmd->args[arg_count] = malloc(sizeof(char)*10);
+                        strcpy(cmd->args[arg_count], tmp1);
+                        arg_count++;
+                    }
                 }else{
                     // TODO PATH＿MAX以上の数が入力された時の処理
-                    //        tmp = strtok(buf, " ");
-                    //        strcpy(s[cmd_count++], tmp);
-                    //        s[cmd_count + 1] = '\0';
-                    //        strncpy(s, buf, slen-1);
-                    //        s[slen-1] = '\0';
                 }
                 tmp1 = strtok(NULL, " ");
             }
@@ -74,6 +80,7 @@ char *strsplit(char *str, const char *divider) {
 void getstr(char *prompt, command *head, int slen) {
     char *p, *tmp, buf[PATH_MAX];
 
+    // 文字列取得
     if(slen > PATH_MAX){
         fprintf(stderr,
                 "getstr: buffer length must be <= %d (%d specified);"
@@ -81,7 +88,6 @@ void getstr(char *prompt, command *head, int slen) {
     }
     fputs(prompt, stderr);
     fgets(buf, PATH_MAX, stdin);
-
     // 行末の改行読み捨て
     if((p = strchr(buf, '\n')) == NULL){
         discardline(stdin);
@@ -89,6 +95,8 @@ void getstr(char *prompt, command *head, int slen) {
         *p = '\0';
     }
 
+    // 文字列が以下の形になっているのでパイプで前から分割していく
+    // [命令1, 引数1, 引数2] | [命令2, 引数1, 引数2] | ...
     char *tmp1;
     tmp1 = buf;
     tmp = strsplit(buf, "|");
@@ -100,16 +108,14 @@ void getstr(char *prompt, command *head, int slen) {
     } else {
         while (tmp1 != NULL) {
             command *new_command = malloc(sizeof(command));
+            strcpy(new_command->filename[0], "");
+            strcpy(new_command->filename[1], "");
+
             new_command->next = NULL;
             if(strlen(tmp1) < slen){
                 getCmd(new_command, tmp1, slen);
             }else{
-                // TODO PATH＿MAX以上の数が入力された時の処理
-                //        tmp = strtok(buf, " ");
-                //        strcpy(s[cmd_count++], tmp);
-                //        s[cmd_count + 1] = '\0';
-                //        strncpy(s, buf, slen-1);
-                //        s[slen-1] = '\0';
+                // TODO PATH_MAX以上の数が入力された時の処理
             }
             tmp1 = tmp;
             tmp = strsplit(tmp1, "|");
